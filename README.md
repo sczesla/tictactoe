@@ -15,9 +15,8 @@ wins about 59%, looses 29%, and draws 12% of the games. Equivalently, the second
 ## Learning the value function
 The value function, V(S), assigns to every board state, S, the expected reward for the player starting in this state, given the current policy. In the case of TTT, the value function can be stored in a table with less than $3^9 \approx 20.000$ entries. In the course of training, an approximation of the optimal value function needs to be obtained. To that end, a series of training games is played. The agents start with a high but exponentially decreasing level of explorative behavior and an iterative scheme is applied to update the value function such that
 
-$$
-V(S_i) = V(S_i) + \alpha(V(S_{i+1}) - V(S_i) ) 
-$$
+<img src="https://render.githubusercontent.com/render/math?math=V(S_i) = V(S_i) + \alpha(V(S_{i+1}) - V(S_i) ) ">
+
 (cf. monograph by Sutton and Barto). The value of the final state is taken to be identical to the received reward with numerical values of one for a win, 0.5 for a draw and zero for a loss.
 
 ## Implementation of players
