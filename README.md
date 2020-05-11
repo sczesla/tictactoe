@@ -47,6 +47,6 @@ After training, the performance of the players improved substantially.
 | qp_x    | 99.2  | 0.8    | 0    |
 | qp_o    | 91.0  | 8.6    | 0.4  |
 | qpnn_x  | 92.0  | 8.0    | 0    |
-| qpnn_o  | 57.6  | 26.6   | 15.8 |
+| qpnn_o  | 85.2  | 12.0   | 2.8  |
 
-The worst performance is exhibited by qpnn_o, i.e., the second player (o) whose value function is approximated by an ANN. Further training improves its performance.   
+The worst performance is exhibited by qpnn_o, i.e., the second player (o) whose value function is approximated by an ANN. Further training improves its performance. 

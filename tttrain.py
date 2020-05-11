@@ -137,9 +137,13 @@ class QP_nn(Player):
         self.cm.compile(loss='mean_squared_error', optimizer=self.opt_cm)
         
         # Save state and reward for training NN
-        self.statehist = np.zeros( (1000,9) )
-        self.vhist = np.zeros(1000)
+        self.statehist = np.zeros( (1000,9) ) * np.nan
+        self.vhist = np.zeros(1000) * np.nan
         self.statecounter = 0
+        
+        # Game and reward history
+        self.gh = []
+        self.rh = []
     
     def initGame(self):      
         """ Start new game """
@@ -196,28 +200,48 @@ class QP_nn(Player):
         """
 
         self.policyupdates += 1
-        # Value of last board state is clear
-        self.statehist[self.statecounter,::] = self.sh[-1]
-        self.vhist[self.statecounter] = r
-        self.statecounter += 1
         
-        # Update value for history
-        for i in range(len(self.sh)-2,-1,-1):
-            self.statehist[self.statecounter,::] = self.sh[i]
-            vnow = self.cm.predict( (self.sh[i]).reshape(1,9) )
-            self.vhist[self.statecounter] = vnow + \
-                                            self.lr * (self.cm.predict((self.sh[i+1]).reshape(1,9)) - vnow)
-            self.statecounter += 1
-
-        if self.statecounter > 50*9:
-            epochs = 5
-            # Adapt the NN to state reward value pairs
-            history_cm = self.cm.fit(self.statehist[0:self.statecounter,::], self.vhist[0:self.statecounter], \
-                                     epochs=epochs, batch_size=self.statecounter//9)
-            self.statecounter = 0
-            self.vhist[::] = np.nan
-            self.statehist[::,::] = np.nan
-
+        # Save game in history
+        self.gh.append(self.sh.copy())
+        self.rh.append(r)
+        
+        ng = 100
+        if len(self.gh) == ng:
+            # Update network
+            # Start with defined end states
+            rs = np.array(self.rh)
+            sh = np.zeros( (ng,9) )
+            for i in range(ng):
+                sh[i,::] = self.gh[i][-1]
+            history_cm = self.cm.fit(sh, rs, \
+                            epochs=10, batch_size=ng)
+            
+            for j in range(-2,-100,-1):
+                # Go back through the games (current and next)
+                cs = np.zeros( (ng,9) ) * np.nan
+                ns = np.zeros( (ng,9) ) * np.nan
+                for i in range(ng):
+                    try:
+                        cs[i,::] = self.gh[i][j]
+                        ns[i,::] = self.gh[i][j+1]
+                    except IndexError:
+                        pass
+                indi = (np.isnan(cs[::,0]) == False)
+                if sum(indi) == 0:
+                    break
+                cs, ns = cs[indi,::], ns[indi,::]
+                vnes = self.cm.predict( ns )
+                vnow = self.cm.predict( cs )
+                vnew = vnow + \
+                    self.lr * (vnes - vnow)
+                
+                history_cm = self.cm.fit(cs, vnew, \
+                                     epochs=4, batch_size=np.sum(indi))
+            # Game and reward history
+            self.gh = []
+            self.rh = []
+        
+        
 
 class QP(Player):
     """
@@ -493,6 +517,7 @@ if __name__ == "__main__":
     q2n = QP_nn(4, name="qpnn_o", eret=30000, lr=0.05)
     rp1 = RP(1, "rp_x")
     rp2 = RP(4, "rp_o")
+    
     
     print("Tournament before training")
     tournament([q1,q2,q1n,q2n,rp1,rp2], args.ntour)
