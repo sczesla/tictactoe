@@ -168,7 +168,7 @@ class QP_nn(Player):
         hm, pms = t.hypoMoves(self.pl)
         hmn = ttt.normalizeField(hm, self.pl)
 
-        vv = self.cm.predict(hmn)
+        vv = self.cm.predict_on_batch(hmn)
     
         if np.max(vv) == 0.0:
             # Choose random (loosing) move
@@ -230,8 +230,8 @@ class QP_nn(Player):
                 if sum(indi) == 0:
                     break
                 cs, ns = cs[indi,::], ns[indi,::]
-                vnes = self.cm.predict( ns )
-                vnow = self.cm.predict( cs )
+                vnes = self.cm.predict_on_batch( ns )
+                vnow = self.cm.predict_on_batch( cs )
                 vnew = vnow + \
                     self.lr * (vnes - vnow)
                 
